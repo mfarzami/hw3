@@ -37,15 +37,18 @@
     <body>
     <h1>NYC Apartment Hunting</h1>
     <p>Check out the rental market in each of Manhattan's neighborhoods!</p>
+     <input type="text" id="search" placeholder="Search for a neighborhood" />
+    <div class="svgs">
+    <svg id="svg" height="700" width="500" style="background: #fff;" ></svg>
+    <svg id="panel" height="700" width="400" style="background: #fff; margin-top:50px" ></svg>
+    
+    </div>
     <div class="labels">
         <p class="expensive">More pricey</p> 
         <p class="cheap">More affordable</p>
     </div>
     <canvas class="scale" width=300 height=20 id="scale" style="border:1px solid #ccc"></canvas>
-    <div class="svgs">
-    <svg id="svg" height="700" width="500" style="background: #fff;" ></svg>
-    <svg id="panel" height="700" width="400" style="background: #fff; margin-top:50px" ></svg>
-    </div>
+   
         <script>
             //set up svg
             var svg = d3.select('svg'),
@@ -106,6 +109,29 @@
                 const ndata = d.properties.csvData;
                 d3.select("#panel").selectAll("*").remove();
 
+                d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke","black")
+                    .attr("stroke-width", 2);
+                    
+                showDetails(d);
+                
+            });
+
+            neighborhoods.on("mouseout", function(d, i) {
+                d3.select("#panel").selectAll("*").remove();
+
+                d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke","");
+            });
+
+            //detail panel 
+            function showDetails(d) {
+                const neighborhood = d.properties.neighborhood;
+                const rent = d.properties.rent;
+                const ndata = d.properties.csvData;
+                d3.select("#panel").selectAll("*").remove();
                 d3.select("#panel").append("text")
                     .attr("x", 10)
                     .attr("y", 40)
@@ -121,11 +147,6 @@
                     .attr("class", "panel-text")
                     .attr("font-size", 17)
                     .text(`Average Rent: $${Math.round(rent)}`);
-
-                d3.select(this)
-                    .transition().duration(200)
-                    .attr("stroke","black")
-                    .attr("stroke-width", 2);
 
                 d3.select("#panel").append("text")
                     .attr("x", 10)
@@ -235,16 +256,7 @@
                     .attr("font-size", "12px")
                     .attr("fill", "black");
                 }
-                
-            });
-
-            neighborhoods.on("mouseout", function(d, i) {
-                d3.select("#panel").selectAll("*").remove();
-
-                d3.select(this)
-                    .transition().duration(200)
-                    .attr("stroke","");
-            });
+            }
 
             //add color key
             function createColorGradient( canvasElement, colorScale ) { //from 3300 final
@@ -266,6 +278,30 @@
 
             createColorGradient( d3.select("canvas#scale"), d3.scaleSequential(d3.interpolateCool) );
 
+            const search = d3.select('#search');
+            search.on('input', findNeighborhood);
+
+            function findNeighborhood() {
+                const userinput = this.value.toLowerCase();
+
+                //find matching hoods
+                const selectedhood = manhattan.features.find(d =>
+                    d.properties.neighborhood.toLowerCase().includes(userinput)
+                );
+
+                //select it like its being hovered
+                if (selectedhood) {
+                   d3.select(selectedhood.properties.neighborhood)
+                    .transition().duration(200)
+                    .attr("stroke","black")
+                    .attr("stroke-width", 2);
+                
+                    //open panel function
+                    showDetails(selectedhood);
+                } else {
+                    d3.select('#panel').selectAll('*').remove();
+                }
+            }
             }
             nycMap();
         </script>
